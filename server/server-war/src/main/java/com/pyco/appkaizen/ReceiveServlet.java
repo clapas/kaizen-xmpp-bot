@@ -1,11 +1,15 @@
 package com.pyco.appkaizen;
 
 import java.io.IOException;
+import java.io.InputStream;
+
 import java.net.URL;
 import java.net.URLEncoder;
 import java.net.HttpURLConnection;
 
 import javax.servlet.http.*;
+
+import java.util.Properties;
 
 import com.google.appengine.api.xmpp.JID;
 import com.google.appengine.api.xmpp.Message;
@@ -35,7 +39,19 @@ public class ReceiveServlet extends HttpServlet {
         Entity socket = datastore.prepare(query).asSingleEntity();
         String socket_io = (String) socket.getProperty("socket_io");
 
-        URL url = new URL("http://floating-chamber-5424.herokuapp.com/answer?socket.io=" + socket_io + "&message=" + URLEncoder.encode(body, "UTF-8"));
+        Properties props = new Properties();
+        InputStream input = null;
+
+        String chat_relayer;
+        try {
+            input = getServletContext().getResourceAsStream("/WEB-INF/config.properties");
+            props.load(input);
+            chat_relayer = props.getProperty("chat_relay_url");
+        } catch (Exception e) {
+            return;
+        }
+
+        URL url = new URL(chat_relayer + "/answer?socket.io=" + socket_io + "&message=" + URLEncoder.encode(body, "UTF-8"));
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.connect();
         int status = connection.getResponseCode();

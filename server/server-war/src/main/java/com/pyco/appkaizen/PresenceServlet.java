@@ -1,8 +1,10 @@
 package com.pyco.appkaizen;
 
+import java.io.InputStream;
 import java.io.IOException;
-import java.util.Properties;
+
 import java.util.List;
+import java.util.Properties;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -45,9 +47,20 @@ public class PresenceServlet extends HttpServlet {
         java.util.logging.Logger logger = java.util.logging.Logger.getLogger("MyLogger");
         logger.log(java.util.logging.Level.WARNING, "available: from " + jid.getId() + " to " + presence.getToJid().getId());
 
+        Properties props = new Properties();
+        InputStream input = null;
+
+        String bot_email;
+        try {
+            input = getServletContext().getResourceAsStream("/WEB-INF/config.properties");
+            props.load(input);
+            bot_email = props.getProperty("bot_email");
+        } catch (Exception e) {
+            return;
+        }
         String to = presence.getToJid().getId().split("/")[0];
         if (presence.getPresenceType() == PresenceType.UNAVAILABLE) {
-            if (to.equals("appkaizen@appspot.com") && !clients.isEmpty())
+            if (to.equals(bot_email) && !clients.isEmpty())
                 datastore.delete(clients.get(0).getKey());
         }
         if (presence.getPresenceType() == PresenceType.AVAILABLE && clients.isEmpty()) {

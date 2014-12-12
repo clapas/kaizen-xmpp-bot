@@ -5,6 +5,11 @@ import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
+
+import java.net.URL;
+import java.net.HttpURLConnection;
+
 import java.util.Properties;
 import java.util.List;
 import java.util.ArrayList;
@@ -120,7 +125,11 @@ public class SendServlet extends HttpServlet {
         if (clients == null) clients = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(3));
         else clients.addAll(datastore.prepare(query).asList(FetchOptions.Builder.withLimit(3)));
     }
-    if (clients.isEmpty()) return;
+    if (clients.isEmpty()) {
+        resp.setStatus(503);
+        return;
+    }
+    if (msg == null || msg.isEmpty()) return; // used to test for available clients
 
     //Key socketKey = KeyFactory.createKey("Socket", user_id);
     //query = new Query("Socket", socketKey).addFilter("socket_io", FilterOperator.EQUAL, socket_io);
@@ -134,10 +143,22 @@ public class SendServlet extends HttpServlet {
         JID to_jid = new JID(to);
         to_jids.add(to_jid);
     }
+
+    Properties props = new Properties();
+    InputStream input = null;
+
+    String chatdom;
+    try {
+        input = getServletContext().getResourceAsStream("/WEB-INF/config.properties");
+        props.load(input);
+        chatdom = props.getProperty("bot_chat_domain");
+    } catch (Exception e) {
+        return;
+    }
     XMPPService xmppService = XMPPServiceFactory.getXMPPService();
     if (sockets.isEmpty()) {
         RandomString rs = new RandomString(12);
-        from = rs.nextString() + "@appkaizen.appspotchat.com";
+        from = rs.nextString() + "@" + chatdom;
         from_jid = new JID(from);
         //Entity socket = new Entity("Socket", socketKey);
         Entity socket = new Entity("Socket");
@@ -145,7 +166,10 @@ public class SendServlet extends HttpServlet {
         socket.setProperty("socket_io", socket_io);
         socket.setProperty("client", (Key) null);
         datastore.put(socket);
-        for (JID to_jid: to_jids) xmppService.sendInvitation(to_jid, from_jid);
+        java.util.logging.Logger logger = java.util.logging.Logger.getLogger("MyLogger");
+        for (JID to_jid: to_jids) { xmppService.sendInvitation(to_jid, from_jid);
+        logger.log(java.util.logging.Level.WARNING, "send invitation to " + to_jid.getId());
+        }
     } else {
         from = (String) sockets.get(0).getProperty("jid");
         from_jid = new JID(from);

@@ -20,6 +20,10 @@
       <servlet-name>unsubscribe</servlet-name>
       <servlet-class>com.pyco.appkaizen.UnsubscribeServlet</servlet-class>
     </servlet>
+    <servlet>
+      <servlet-name>email</servlet-name>
+      <servlet-class>com.pyco.appkaizen.EmailServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
       <servlet-name>presence</servlet-name>
       <url-pattern>/_ah/xmpp/presence/available/</url-pattern>
@@ -43,6 +47,10 @@
     <servlet-mapping>
       <servlet-name>send</servlet-name>
       <url-pattern>/send</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+      <servlet-name>email</servlet-name>
+      <url-pattern>/email</url-pattern>
     </servlet-mapping>
     <welcome-file-list>
       <welcome-file>server.jsp</welcome-file>
